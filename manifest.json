@@ -1,19 +1,20 @@
 {
-  "name": "Catbot Termux",
-  "short_name": "Catbot",
-  "start_url": ".",
+  "name": "Chatbot Genit",
+  "short_name": "ChatGenit",
+  "description": "Chatbot WA-style genit, bisa edit data, upload/download, copy-paste, dan minta jawaban baru",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#00ffff",
-  "description": "Bot Catatan Nyimpan Dataset",
+  "background_color": "#075e54",
+  "theme_color": "#075e54",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "icon/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
