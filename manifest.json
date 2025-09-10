@@ -1,7 +1,7 @@
 {
-  "name": "Chatbot Genit",
-  "short_name": "ChatGenit",
-  "description": "Chatbot WA-style genit, bisa edit data, upload/download, copy-paste, dan minta jawaban baru",
+  "name": "Chatbot",
+  "short_name": "Chat",
+  "description": "Chatbot WA",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#075e54",
