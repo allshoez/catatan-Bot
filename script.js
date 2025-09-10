@@ -1,33 +1,46 @@
-// Load data dari LocalStorage
+// ===== Load data =====
 if (localStorage.getItem("botRules")) {
   try {
     botRules = JSON.parse(localStorage.getItem("botRules"));
+    botRules.forEach(rule => {
+      if (!Array.isArray(rule.Jawab)) rule.Jawab = [rule.Jawab];
+    });
   } catch(e) {
     console.warn("Gagal load data dari LocalStorage, pakai default botdata.js");
   }
 }
 
-// Cari jawaban
+// ===== Cari jawaban =====
 function cariJawaban(input) {
-  input = input.toLowerCase();
+  input = input.toLowerCase().trim();
+
+  // 1️⃣ Exact match dulu
   for (let rule of botRules) {
     for (let t of rule.Tanya) {
-      if (input.includes(t.toLowerCase())) {
-        if (Array.isArray(rule.Jawab)) {
-          return rule.Jawab[Math.floor(Math.random() * rule.Jawab.length)];
-        } else {
-          return rule.Jawab;
-        }
+      if (input === t.toLowerCase().trim()) {
+        return rule.Jawab[Math.floor(Math.random() * rule.Jawab.length)];
       }
     }
   }
-  return null; // Tidak ada jawaban
+
+  // 2️⃣ Partial match (optional, lebih spesifik)
+  const sortedRules = [...botRules].sort((a,b) => b.Tanya[0].length - a.Tanya[0].length);
+  for (let rule of sortedRules) {
+    for (let t of rule.Tanya) {
+      if (input.includes(t.toLowerCase().trim())) {
+        return rule.Jawab[Math.floor(Math.random() * rule.Jawab.length)];
+      }
+    }
+  }
+
+  return null;
 }
 
-// Variabel pertanyaan baru
+// ===== Variabel =====
 let pertanyaanPending = "";
+let ruleSedangEdit = null;
 
-// Kirim pesan
+// ===== Kirim pesan =====
 function kirimPesan() {
   const input = document.getElementById("userInput");
   const pesan = input.value.trim();
@@ -39,7 +52,6 @@ function kirimPesan() {
   if (jawaban) {
     setTimeout(() => tampilkanPesan(jawaban, "bot"), 600);
   } else {
-    // Tampilkan modal minta jawaban baru
     pertanyaanPending = pesan;
     document.getElementById("pertanyaanBaru").textContent = `"${pesan}"`;
     document.getElementById("inputJawabanBaru").value = "";
@@ -49,14 +61,14 @@ function kirimPesan() {
   input.value = "";
 }
 
-// Tampilkan pesan
+// ===== Tampilkan pesan (emoji fix) =====
 function tampilkanPesan(teks, tipe) {
   const chatBox = document.getElementById("chatBox");
   const bubble = document.createElement("div");
   bubble.classList.add("bubble", tipe);
-  bubble.textContent = teks;
+  bubble.style.fontFamily = '"Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif';
+  bubble.innerText = teks;
 
-  // Tombol copy
   const copyBtn = document.createElement("button");
   copyBtn.className = "copy-btn";
   copyBtn.textContent = "📋";
@@ -69,21 +81,90 @@ function tampilkanPesan(teks, tipe) {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-// Popup menu
-function toggleMenu() {
-  document.getElementById("menuPopup").classList.toggle("show");
+// ===== Modal jawaban baru =====
+function tutupModal() {
+  document.getElementById("modalJawab").style.display = "none";
+  pertanyaanPending = "";
 }
 
-// Tutup popup kalau klik di luar
-document.addEventListener("click", function(event) {
-  const menu = document.getElementById("menuPopup");
-  const tombol = event.target.closest("header span"); // span 3 titik
-  if (!tombol && !menu.contains(event.target)) {
-    menu.classList.remove("show");
-  }
-});
+function simpanJawabanBaru() {
+  const jawabanUser = document.getElementById("inputJawabanBaru").value.trim();
+  if (!jawabanUser) return alert("Tulis jawaban dulu bro 😅");
 
-// Download data
+  let ruleAda = botRules.find(rule =>
+    rule.Tanya.some(t => t.toLowerCase() === pertanyaanPending.toLowerCase())
+  );
+
+  if (ruleAda) {
+    if (!ruleAda.Jawab.includes(jawabanUser)) {
+      ruleAda.Jawab.push(jawabanUser);
+      tampilkanPesan("Jawaban ditambahkan ke rule yang ada ✅", "bot");
+    } else {
+      tampilkanPesan("Jawaban sudah ada ✅", "bot");
+    }
+  } else {
+    botRules.push({ Tanya: [pertanyaanPending], Jawab: [jawabanUser] });
+    tampilkanPesan("Rule baru berhasil dibuat ✅", "bot");
+  }
+
+  localStorage.setItem("botRules", JSON.stringify(botRules));
+  tutupModal();
+}
+
+// ===== Modal edit jawaban =====
+function bukaModalEdit(pertanyaan) {
+  ruleSedangEdit = botRules.find(rule =>
+    rule.Tanya.some(t => t.toLowerCase() === pertanyaan.toLowerCase())
+  );
+  if (!ruleSedangEdit) return;
+
+  document.getElementById("pertanyaanEdit").innerText = pertanyaan;
+  renderListJawaban();
+  document.getElementById("modalEditJawab").style.display = "flex";
+}
+
+function renderListJawaban() {
+  const list = document.getElementById("listJawaban");
+  list.innerHTML = "";
+  ruleSedangEdit.Jawab.forEach((jawaban, idx) => {
+    const li = document.createElement("li");
+    li.style.marginBottom = "5px";
+    li.innerText = jawaban;
+
+    const hapusBtn = document.createElement("button");
+    hapusBtn.innerText = "❌";
+    hapusBtn.style.marginLeft = "10px";
+    hapusBtn.onclick = () => {
+      ruleSedangEdit.Jawab.splice(idx, 1);
+      localStorage.setItem("botRules", JSON.stringify(botRules));
+      renderListJawaban();
+    };
+
+    li.appendChild(hapusBtn);
+    list.appendChild(li);
+  });
+}
+
+function tambahJawabanEdit() {
+  const val = document.getElementById("inputJawabanEdit").value.trim();
+  if (!val) return alert("Tulis jawaban dulu bro 😅");
+
+  if (!ruleSedangEdit.Jawab.includes(val)) {
+    ruleSedangEdit.Jawab.push(val);
+    localStorage.setItem("botRules", JSON.stringify(botRules));
+    document.getElementById("inputJawabanEdit").value = "";
+    renderListJawaban();
+  } else {
+    alert("Jawaban sudah ada ✅");
+  }
+}
+
+function tutupModalEdit() {
+  document.getElementById("modalEditJawab").style.display = "none";
+  ruleSedangEdit = null;
+}
+
+// ===== Download & Upload =====
 function downloadData() {
   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(botRules, null, 2));
   const dlAnchor = document.createElement("a");
@@ -93,7 +174,6 @@ function downloadData() {
   toggleMenu();
 }
 
-// Upload data
 function uploadData(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -102,6 +182,9 @@ function uploadData(event) {
   reader.onload = function(e) {
     try {
       botRules = JSON.parse(e.target.result);
+      botRules.forEach(rule => {
+        if (!Array.isArray(rule.Jawab)) rule.Jawab = [rule.Jawab];
+      });
       localStorage.setItem("botRules", JSON.stringify(botRules));
       alert("Data bot berhasil di-upload!");
       document.getElementById("editor").value = JSON.stringify(botRules, null, 2);
@@ -112,7 +195,7 @@ function uploadData(event) {
   reader.readAsText(file);
 }
 
-// Edit data switcher
+// ===== Switch editor =====
 function switchMode() {
   const chat = document.getElementById("chatSection");
   const editor = document.getElementById("editSection");
@@ -127,10 +210,12 @@ function switchMode() {
   toggleMenu();
 }
 
-// Simpan hasil edit
 function saveEditedData() {
   try {
     const newData = JSON.parse(document.getElementById("editor").value);
+    newData.forEach(rule => {
+      if (!Array.isArray(rule.Jawab)) rule.Jawab = [rule.Jawab];
+    });
     botRules = newData;
     localStorage.setItem("botRules", JSON.stringify(botRules));
     alert("Data bot berhasil diperbarui dan disimpan!");
@@ -139,21 +224,15 @@ function saveEditedData() {
   }
 }
 
-// Modal jawaban baru
-function tutupModal() {
-  document.getElementById("modalJawab").style.display = "none";
-  pertanyaanPending = "";
+// ===== Popup menu =====
+function toggleMenu() {
+  document.getElementById("menuPopup").classList.toggle("show");
 }
 
-function simpanJawabanBaru() {
-  const jawabanUser = document.getElementById("inputJawabanBaru").value.trim();
-  if (!jawabanUser) {
-    alert("Tulis jawaban dulu bro 😅");
-    return;
+document.addEventListener("click", function(event) {
+  const menu = document.getElementById("menuPopup");
+  const tombol = event.target.closest("header span"); 
+  if (!tombol && !menu.contains(event.target)) {
+    menu.classList.remove("show");
   }
-  // Simpan ke rules
-  botRules.push({ Tanya: [pertanyaanPending], Jawab: [jawabanUser] });
-  localStorage.setItem("botRules", JSON.stringify(botRules));
-  tampilkanPesan("Jawaban baru berhasil disimpan ✅", "bot");
-  tutupModal();
-}
+});
