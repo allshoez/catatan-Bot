@@ -23,7 +23,7 @@ function cariJawaban(input) {
     }
   }
 
-  // 2️⃣ Partial match (optional, lebih spesifik)
+  // 2️⃣ Partial match
   const sortedRules = [...botRules].sort((a,b) => b.Tanya[0].length - a.Tanya[0].length);
   for (let rule of sortedRules) {
     for (let t of rule.Tanya) {
@@ -61,7 +61,7 @@ function kirimPesan() {
   input.value = "";
 }
 
-// ===== Tampilkan pesan (emoji fix) =====
+// ===== Tampilkan pesan =====
 function tampilkanPesan(teks, tipe) {
   const chatBox = document.getElementById("chatBox");
   const bubble = document.createElement("div");
@@ -71,7 +71,7 @@ function tampilkanPesan(teks, tipe) {
 
   const copyBtn = document.createElement("button");
   copyBtn.className = "copy-btn";
-  copyBtn.textContent = "📋";
+  copyBtn.textContent = "\uD83D\uDCCB"; // 📋
   copyBtn.onclick = () => {
     navigator.clipboard.writeText(teks).then(() => alert("Teks berhasil dicopy!"));
   };
@@ -89,7 +89,7 @@ function tutupModal() {
 
 function simpanJawabanBaru() {
   const jawabanUser = document.getElementById("inputJawabanBaru").value.trim();
-  if (!jawabanUser) return alert("Tulis jawaban dulu bro 😅");
+  if (!jawabanUser) return alert("Tulis jawaban dulu bro \u2705"); // ✅
 
   let ruleAda = botRules.find(rule =>
     rule.Tanya.some(t => t.toLowerCase() === pertanyaanPending.toLowerCase())
@@ -98,13 +98,13 @@ function simpanJawabanBaru() {
   if (ruleAda) {
     if (!ruleAda.Jawab.includes(jawabanUser)) {
       ruleAda.Jawab.push(jawabanUser);
-      tampilkanPesan("Jawaban ditambahkan ke rule yang ada ✅", "bot");
+      tampilkanPesan("Jawaban ditambahkan ke rule yang ada \u2705", "bot");
     } else {
-      tampilkanPesan("Jawaban sudah ada ✅", "bot");
+      tampilkanPesan("Jawaban sudah ada \u2705", "bot");
     }
   } else {
     botRules.push({ Tanya: [pertanyaanPending], Jawab: [jawabanUser] });
-    tampilkanPesan("Rule baru berhasil dibuat ✅", "bot");
+    tampilkanPesan("Rule baru berhasil dibuat \u2705", "bot");
   }
 
   localStorage.setItem("botRules", JSON.stringify(botRules));
@@ -132,7 +132,7 @@ function renderListJawaban() {
     li.innerText = jawaban;
 
     const hapusBtn = document.createElement("button");
-    hapusBtn.innerText = "❌";
+    hapusBtn.innerText = "\u274C"; // ❌
     hapusBtn.style.marginLeft = "10px";
     hapusBtn.onclick = () => {
       ruleSedangEdit.Jawab.splice(idx, 1);
@@ -147,7 +147,7 @@ function renderListJawaban() {
 
 function tambahJawabanEdit() {
   const val = document.getElementById("inputJawabanEdit").value.trim();
-  if (!val) return alert("Tulis jawaban dulu bro 😅");
+  if (!val) return alert("Tulis jawaban dulu bro \u2705");
 
   if (!ruleSedangEdit.Jawab.includes(val)) {
     ruleSedangEdit.Jawab.push(val);
@@ -155,7 +155,7 @@ function tambahJawabanEdit() {
     document.getElementById("inputJawabanEdit").value = "";
     renderListJawaban();
   } else {
-    alert("Jawaban sudah ada ✅");
+    alert("Jawaban sudah ada \u2705");
   }
 }
 
